@@ -20,7 +20,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.eaata.simuladorJurosVendas",
-      "deploymentTarget": "15.1",
       "infoPlist": {
         "NSPhotoLibraryAddUsageDescription": "O app salva relatórios em PDF na sua galeria.",
         "NSPhotoLibraryUsageDescription": "Permita acesso para salvar PDFs.",
@@ -30,7 +29,6 @@
     },
     "android": {
       "package": "com.eaata.simuladorJurosVendas",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#009de0"
@@ -42,13 +40,6 @@
         "WRITE_EXTERNAL_STORAGE",
         "MANAGE_EXTERNAL_STORAGE"
       ],
-      "usesPermissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.MANAGE_EXTERNAL_STORAGE"
-      ],
-      "usesCleartextTraffic": true,
-      "networkSecurityConfig": "./network_security_config.xml",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -73,9 +64,9 @@
           "android": {
             "usesCleartextTraffic": true,
             "networkSecurityConfig": true,
-            "compileSdkVersion": 33,
-            "targetSdkVersion": 33,
-            "buildToolsVersion": "33.0.0"
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "34.0.0"
           },
           "ios": {
             "deploymentTarget": "15.1"
@@ -87,7 +78,8 @@
         {
           "iCloudContainerEnvironment": "Production"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -99,7 +91,7 @@
       "eas": {
         "projectId": "4621528f-21be-49b5-a6a7-a661e54f2e29"
       },
-      "apiUrl": "http://82.25.71.76/api" 
+      "apiUrl": "http://82.25.71.76/api"
     }
   }
 }
