@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "simuladorJurosVendas",
+    "name": "Simulador EAATA",
     "slug": "simuladorJurosVendas",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,14 +8,47 @@
     "scheme": "simuladorjurosvendas",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "updates": {
+      "url": "https://u.expo.dev/4621528f-21be-49b5-a6a7-a661e54f2e29"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.eaata.simuladorJurosVendas",
+      "deploymentTarget": "15.1",
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "O app salva relatórios em PDF na sua galeria.",
+        "NSPhotoLibraryUsageDescription": "Permita acesso para salvar PDFs.",
+        "NSDocumentsFolderUsageDescription": "O app precisa acessar sua pasta de Documentos para armazenar arquivos.",
+        "NSCameraUsageDescription": "Permita acesso à câmera para capturar documentos."
+      }
     },
     "android": {
+      "package": "com.eaata.simuladorJurosVendas",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#009de0"
       },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "MANAGE_EXTERNAL_STORAGE"
+      ],
+      "usesPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.MANAGE_EXTERNAL_STORAGE"
+      ],
+      "usesCleartextTraffic": true,
+      "networkSecurityConfig": "./network_security_config.xml",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -28,15 +61,45 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#009de0"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "networkSecurityConfig": true,
+            "compileSdkVersion": 33,
+            "targetSdkVersion": 33,
+            "buildToolsVersion": "33.0.0"
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "4621528f-21be-49b5-a6a7-a661e54f2e29"
+      },
+      "apiUrl": "http://82.25.71.76/api" 
     }
   }
 }
