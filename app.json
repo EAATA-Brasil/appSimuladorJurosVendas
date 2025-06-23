@@ -12,7 +12,7 @@
       "policy": "sdkVersion"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "assets/**"
     ],
     "updates": {
       "url": "https://u.expo.dev/4621528f-21be-49b5-a6a7-a661e54f2e29"
@@ -20,15 +20,22 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.eaata.simuladorJurosVendas",
+      "buildNumber": "1.0.0",
       "infoPlist": {
         "NSPhotoLibraryAddUsageDescription": "O app salva relatórios em PDF na sua galeria.",
         "NSPhotoLibraryUsageDescription": "Permita acesso para salvar PDFs.",
         "NSDocumentsFolderUsageDescription": "O app precisa acessar sua pasta de Documentos para armazenar arquivos.",
-        "NSCameraUsageDescription": "Permita acesso à câmera para capturar documentos."
+        "NSCameraUsageDescription": "Permita acesso à câmera para capturar documentos.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.icloud-services": ["CloudDocuments"],
+        "com.apple.developer.icloud-container-identifiers": ["iCloud.com.eaata.simuladorJurosVendas"]
       }
     },
     "android": {
       "package": "com.eaata.simuladorJurosVendas",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#009de0"
@@ -37,15 +44,14 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "MANAGE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE"
       ],
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router",
@@ -66,23 +72,30 @@
             "networkSecurityConfig": true,
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
-            "buildToolsVersion": "34.0.0"
+            "buildToolsVersion": "34.0.0",
+            "enableProguardInReleaseBuilds": true,
+            "extraMavenRepos": ["https://maven.google.com"]
           },
           "ios": {
-            "deploymentTarget": "15.1"
+            "deploymentTarget": "15.1",
+            "useFrameworks": "static"
           }
         }
       ],
       [
-        "expo-document-picker",
+        "expo-asset",
         {
-          "iCloudContainerEnvironment": "Production"
+          "assets": [
+            "./assets/images/logo.jpg",
+            "./assets/images/icon.png",
+            "./assets/images/splash.png"
+          ]
         }
-      ],
-      "expo-web-browser"
+      ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "tsconfigPaths": true
     },
     "extra": {
       "router": {

@@ -225,12 +225,12 @@ export default function App() {
 
   // NF Serviço
   useEffect(() => {
-    setServicoNF(parseInt(entrada) + (parcelas * valorParcela) - produtoNF);
+    setServicoNF(parseInt(entrada ? entrada : 0) + (parcelas * valorParcela) - produtoNF);
   }, [entrada, parcelas, valorParcela, produtoNF]);
 
   // NF Produto
   useEffect(() => {
-    setProdutoNF((pagamento === 'Boleto' && condicao === 'Normal') ? (parseInt(entrada) + (valorParcela * parcelas)) : baseNF);
+    setProdutoNF((pagamento === 'Boleto' && condicao === 'Normal') ? (parseInt(entrada?entrada : 0) + (valorParcela * parcelas)) : baseNF);
   }, [condicao, pagamento, entrada, parcelas, valorParcela, baseNF]);
 
   useEffect(() => {
