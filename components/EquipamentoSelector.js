@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
+import { Rect, Svg, Path, G } from 'react-native-svg';
+import {
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const EquipamentoSelector = ({
   equipamentos,
@@ -72,7 +73,12 @@ const EquipamentoSelector = ({
         >
           {selectedEquipamento ? selectedEquipamento.nome : 'Selecione um equipamento...'}
         </Text>
-        <MaterialIcons name="arrow-drop-down" size={24} color="#7f8c8d" />
+        <Svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24">
+          <Rect x="0" fill="none" width="24" height="24" />
+          <G>
+            <Path d="M7 10l5 5 5-5" />
+          </G>
+        </Svg>
       </TouchableOpacity>
 
       <Modal
@@ -88,7 +94,17 @@ const EquipamentoSelector = ({
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
             >
-              <MaterialIcons name="close" size={24} color="#2c3e50" />
+              <Svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24px" 
+                height="24px" 
+                viewBox="0 0 1024 1024"
+              >
+                <Path 
+                  fill="#2c3e50" 
+                  d="M195.2 195.2a64 64 0 0 1 90.496 0L512 421.504 738.304 195.2a64 64 0 0 1 90.496 90.496L602.496 512 828.8 738.304a64 64 0 0 1-90.496 90.496L512 602.496 285.696 828.8a64 64 0 0 1-90.496-90.496L421.504 512 195.2 285.696a64 64 0 0 1 0-90.496z"
+                />
+              </Svg>
             </TouchableOpacity>
           </View>
 
@@ -147,7 +163,7 @@ const EquipamentoSelector = ({
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <MaterialIcons name="search-off" size={50} color="#bdc3c7" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="50px" height="50px" viewBox="0 0 24 24" fill="none"><path d="M16.6725 16.6412L21 21M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="#bdc3c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <Text style={styles.emptyText}>
                   {searchText || selectedGrupo 
                     ? "Nenhum equipamento encontrado com esses filtros"
@@ -232,7 +248,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   marcasScroll: {
-    maxHeight: 60,
+    minHeight: 50,
+    maxHeight: 50,
     marginHorizontal: 15,
   },
   marcasContainer: {

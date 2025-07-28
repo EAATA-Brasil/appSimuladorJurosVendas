@@ -12,7 +12,7 @@
       "policy": "sdkVersion"
     },
     "assetBundlePatterns": [
-      "assets/**"
+      "**/*"
     ],
     "updates": {
       "url": "https://u.expo.dev/4621528f-21be-49b5-a6a7-a661e54f2e29"
@@ -20,7 +20,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.eaata.simuladorJurosVendas",
-      "buildNumber": "1.0.0",
       "infoPlist": {
         "NSPhotoLibraryAddUsageDescription": "O app salva relatórios em PDF na sua galeria.",
         "NSPhotoLibraryUsageDescription": "Permita acesso para salvar PDFs.",
@@ -29,13 +28,16 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
-        "com.apple.developer.icloud-services": ["CloudDocuments"],
-        "com.apple.developer.icloud-container-identifiers": ["iCloud.com.eaata.simuladorJurosVendas"]
+        "com.apple.developer.icloud-services": [
+          "CloudDocuments"
+        ],
+        "com.apple.developer.icloud-container-identifiers": [
+          "iCloud.com.eaata.simuladorJurosVendas"
+        ]
       }
     },
     "android": {
       "package": "com.eaata.simuladorJurosVendas",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#009de0"
@@ -46,12 +48,15 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ],
-      "edgeToEdgeEnabled": true,
-      "softwareKeyboardLayoutMode": "pan"
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/images/icon.png",
+      "build": {
+        "publicPath": "/simulador/"
+      }
     },
     "plugins": [
       "expo-router",
@@ -72,30 +77,25 @@
             "networkSecurityConfig": true,
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
-            "buildToolsVersion": "34.0.0",
-            "enableProguardInReleaseBuilds": true,
-            "extraMavenRepos": ["https://maven.google.com"]
+            "buildToolsVersion": "34.0.0"
           },
           "ios": {
-            "deploymentTarget": "15.1",
-            "useFrameworks": "static"
+            "deploymentTarget": "15.1"
           }
         }
       ],
       [
-        "expo-asset",
+        "expo-document-picker",
         {
-          "assets": [
-            "./assets/images/logo.jpg",
-            "./assets/images/icon.png",
-            "./assets/images/splash.png"
-          ]
+          "iCloudContainerEnvironment": "Production",
+          "iCloudContainerIdentifier": "iCloud.com.eaata.simuladorJurosVendas"
         }
-      ]
+      ],
+      "expo-web-browser",
+      "expo-asset"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "tsconfigPaths": true
+      "typedRoutes": true
     },
     "extra": {
       "router": {
@@ -105,6 +105,14 @@
         "projectId": "4621528f-21be-49b5-a6a7-a661e54f2e29"
       },
       "apiUrl": "http://82.25.71.76/api"
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "androidStatusBar": {
+      "backgroundColor": "#009de0"
     }
   }
 }

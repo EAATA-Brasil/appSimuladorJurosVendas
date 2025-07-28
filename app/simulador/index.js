@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import EquipamentoSelector from '../components/EquipamentoSelector';
-import PDFSimulacao from '../components/GenePDF';
-import { FinanceiroInput, NumericInput, Radio } from '../components/Inputs';
+import EquipamentoSelector from '../../components/EquipamentoSelector';
+import PDFSimulacao from '../../components/GenePDF';
+import { FinanceiroInput, NumericInput, Radio } from '../../components/Inputs';
 
 const API_BASE_URL = 'http://82.25.71.76/api'
 
