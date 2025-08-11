@@ -44,6 +44,7 @@ export default function FinanceiroInput({
   };
 
   const handleChange = (text) => {
+    
     let numericValue = text.replace(/[^0-9]/g, '');
 
     // Limita porcentagem a 100
@@ -52,10 +53,16 @@ export default function FinanceiroInput({
     }
 
     setDisplayValue(numericValue);
-
+    
     // Só envia o valor absoluto quando o input perde o foco
     // Removemos a chamada imediata do onValueChange
   };
+
+  useEffect(()=>{
+    if(tipoDesconto !== 'porcentagem'){
+      onValueChange(getAbsoluteValue(displayValue))
+    }
+  },[displayValue])
 
   const handleBlur = () => {
     // Quando o input perde o foco, envia o valor absoluto
@@ -127,6 +134,7 @@ export default function FinanceiroInput({
           keyboardType="number-pad"
           value={formatDisplayValue(displayValue)}
           onChangeText={handleChange}
+          
           onBlur={handleBlur}
           placeholder={placeholder}
           {...props}

@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://82.25.71.76/api'
 
 // process.env.NODE_ENV === 'development' 
 //   ? 'http://192.168.18.150:8000/api' 
-//   : 'http://192.168.18.150:8000/api'; // Mesmo IP para APK
+//   : 'http://82.25.71.76/api'; // Mesmo IP para APK
 
 const equipamentos_URL = `${API_BASE_URL}/equipamentos/`;
 const tipo_equipamento_URL = `${API_BASE_URL}/tipoEquipamento/`;
@@ -23,6 +23,10 @@ export default function App() {
   
   const [nomeVendedor, setNomeVendedor] = useState('');
   const [erroNomeVendedor, setErroNomeVendedor] = useState(false);
+  const [nomeCNPJ, setNomeCNPJ] = useState('');
+  const [erroNomeCNPJ, setErroNomeCNPJ] = useState(false);
+  const [nomeCliente, setNomeCliente] = useState('');
+  const [erroNomeCliente, setErroNomeCliente] = useState(false);
 
   const nomeInputRef = useRef(null);
   const scrollViewRef = useRef(null);
@@ -93,33 +97,100 @@ export default function App() {
     }).format(valor);
   };
 
+  function formatCNPJ(value) {
+    // Remove tudo que não for número
+    value = value.replace(/\D/g, '');
+
+    // Limita a 14 dígitos (tamanho do CNPJ)
+    value = value.slice(0, 14);
+
+    // Aplica máscara do CNPJ passo a passo
+    if (value.length > 12) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/, '$1.$2.$3/$4-$5');
+    } else if (value.length > 8) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+    } else if (value.length > 5) {
+      value = value.replace(/^(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+    } else if (value.length > 2) {
+      value = value.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
+    }
+
+    return value;
+  }
+
+
   var somaValores = useMemo(() => {
     return valoresCalculados.reduce((a, b) => a + b, 0);
   }, [valoresCalculados]);
 
   // Função para validar se o nome do vendedor foi preenchido
-  const validarNomeVendedor = () => {
-  const nomeValido = nomeVendedor.trim() !== '';
-  setErroNomeVendedor(!nomeValido);
+  const validarNomeCNPJ = () => {
+    const nomeValido = nomeCNPJ.trim() !== '';
+    setErroNomeCNPJ(!nomeValido);
 
-  if (!nomeValido) {
-    if(Platform.OS === 'web'){
-      const inputElement = document.getElementById('nomeVendedorInput');      
-      if (inputElement) {
-        inputElement.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'center'
-        });
-        inputElement.focus();
+    if (!nomeValido) {
+      if(Platform.OS === 'web'){
+        const inputElement = document.getElementById('nomeCNPJInput');      
+        if (inputElement) {
+          inputElement.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+          inputElement.focus();
+        }
+      }else{
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       }
-    }else{
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-    }
 
-    return false;
-  }
-  return true;
-};
+      return false;
+    }
+    return true;
+  };
+  const validarNomeVendedor = () => {
+    const nomeValido = nomeVendedor.trim() !== '';
+    setErroNomeVendedor(!nomeValido);
+
+    if (!nomeValido) {
+      if(Platform.OS === 'web'){
+        const inputElement = document.getElementById('nomeVendedorInput');      
+        if (inputElement) {
+          inputElement.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+          inputElement.focus();
+        }
+      }else{
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }
+
+      return false;
+    }
+    return true;
+  };
+
+  const validarNomeCliente = () => {
+    const nomeValido = nomeCliente.trim() !== '';
+    setErroNomeCliente(!nomeValido);
+
+    if (!nomeValido) {
+      if(Platform.OS === 'web'){
+        const inputElement = document.getElementById('nomeClienteInput');      
+        if (inputElement) {
+          inputElement.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+          });
+          inputElement.focus();
+        }
+      }else{
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }
+
+      return false;
+    }
+    return true;
+  };
 
   // Carrega dados da API
   useEffect(() => {
@@ -166,7 +237,7 @@ export default function App() {
       <h2 class="section-title" style='border-bottom: none; padding-bottom:0px; font-size:17px;'>
         Está incluso para o <strong>${equipamento.nome}</strong>:
       </h2>
-      ${temDetalhe ? `${detalhe}` : ''}
+      ${temDetalhe ? `${detalhe}<br>` : ''}
       ${grupoValido ? '2 anos de suporte' : ''}
     `
     : '';
@@ -224,8 +295,8 @@ export default function App() {
   ];
   
   const optionsLocalizacao = [
-    {label: 'SP / MEI BRASIL TODO', value: 'SP'},
-    {label: 'Outros / Sem inscrição MEI', value: 'Outros'},
+    {label: 'SP / Outros estados sem Inscrição Estadual ', value: 'SP'},
+    {label: 'Outros estados / CNPJ com Inscrição Estadual', value: 'Outros'},
   ];
   
   const optionsFaturamento = [
@@ -284,20 +355,65 @@ export default function App() {
     }
     setEntrada(Math.round(defaultEntrada));
   }, [localizacao, pagamento, faturamento, equipamentosSelecionados]);
-  
+  const [boletoDisponivel, setBoletoDisponivel] = useState(true);
+  const [parcelasDesabilitadas, setParcelasDesabilitadas] = useState(false);
+
   useEffect(() => {
-    let maxParcelas = 12; // Default value
-    if (equipamentosSelecionados.length > 0) {
-      const validEquipments = equipamentosSelecionados.filter(e => e != null);
-      if (validEquipments.length > 0) {
-        maxParcelas = Math.max(...validEquipments.map(equip => equip.parcelas || 12));
+      // Verifique se 'equipamentosSelecionados' é um array válido e não está vazio.
+      if (!Array.isArray(equipamentosSelecionados) || equipamentosSelecionados.length === 0) {
+          setBoletoDisponivel(true);
+          setParcelasDesabilitadas(false);
+          return;
       }
+
+      // Filtra para remover quaisquer valores nulos ou indefinidos do array.
+      const equipamentosValidos = equipamentosSelecionados.filter(equip => equip);
+
+      // Lógica para Boleto
+      // Verifica se algum equipamento não aceita boleto
+      const algumEquipamentoNaoAceitaBoleto = equipamentosValidos.some(equip => !equip.boleto);
+      
+      // Se algum equipamento não aceita boleto, o rádio de boleto deve sumir.
+      setBoletoDisponivel(!algumEquipamentoNaoAceitaBoleto);
+
+      // Se o boleto não estiver disponível, forçar a seleção de Cartao
+      if (algumEquipamentoNaoAceitaBoleto) {
+          setPagamento("Cartao");
+      }
+
+      // Lógica para Parcelas
+      // Verifica se todos os equipamentos são apenas à vista
+      const todosSaoAVista = equipamentosValidos.every(equip => equip.avista);
+
+      // Se todos são à vista e há pelo menos um equipamento, desabilita as parcelas
+      if (todosSaoAVista) {
+          setParcelasDesabilitadas(true);
+          setParcelas(1); // Força para 1 parcela
+      } else {
+          setParcelasDesabilitadas(false);
+      }
+  }, [equipamentosSelecionados]);
+
+  // Modifique o useEffect que calcula o maxParcelas para ser executado apenas se parcelas não estiver desabilitado
+  useEffect(() => {
+    if (!parcelasDesabilitadas) {
+        let maxParcelas = 12; 
+        if (equipamentosSelecionados.length > 0) {
+            const validEquipments = equipamentosSelecionados.filter(e => e != null);
+            if (validEquipments.length > 0) {
+                // A lógica de `maxParcelas` permanece a mesma, pois é baseada no maior valor.
+                maxParcelas = Math.max(...validEquipments.map(equip => equip.parcelas || 12));
+            }
+        }
+        if(pagamento === 'Cartao'){
+            // A lógica de maxParcelas para Cartão permanece inalterada
+            maxParcelas = 12;
+        }
+        setParcelas(maxParcelas);
+    }else{
+      setParcelas(1)
     }
-    if(pagamento === 'Cartao'){
-      maxParcelas = 12
-    }
-    setParcelas(maxParcelas);
-  }, [equipamentosSelecionados, pagamento]);
+  }, [equipamentosSelecionados, pagamento, parcelasDesabilitadas]);
 
   // Cálculo de valor da parcela
   useEffect(() => {
@@ -425,15 +541,49 @@ export default function App() {
                   </Text>
                 )}
               </View>
-              
+              <View style={styles.inputGroup} id='nomeClienteInput'>
+                  <Text style={styles.radioGroupTitle}>Nome do cliente *</Text>
+                  <TextInput
+                    ref={nomeInputRef}
+                    style={[
+                      styles.input,
+                      {
+                        padding: 12,
+                        backgroundColor: 'rgb(248, 249, 250)',
+                        borderColor: erroNomeCliente ? '#E74C3C' : '#E9ECEF',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                      },
+                    ]}
+                    placeholder="Digite o nome do cliente"
+                    placeholderTextColor="#95a5a6"
+                    value={nomeCliente}
+                    onChangeText={(text) => {
+                      setNomeCliente(text);
+                      if (text.trim() !== '') {
+                        setErroNomeCliente(false);
+                      }
+                    }}
+                  />
+                  {erroNomeCliente && (
+                    <Text style={styles.errorText}>
+                      ⚠️ O nome do cliente é obrigatório.
+                    </Text>
+                  )}
+              </View>
+                
               <View style={styles.radioGroup}>
-                <Text style={styles.radioGroupTitle}>Forma de Pagamento</Text>
-                <Radio 
-                  options={optionsPagamento} 
-                  checkedValue={pagamento} 
-                  onChange={setPagamento}
-                  containerStyle={styles.radioContainer}
-                />
+                  <Text style={styles.radioGroupTitle}>Forma de Pagamento</Text>
+                  <Radio 
+                      options={
+                          boletoDisponivel 
+                          ? optionsPagamento 
+                          : optionsPagamento.filter(opt => opt.value !== 'Boleto')
+                      }
+                      checkedValue={pagamento} 
+                      onChange={setPagamento}
+                      containerStyle={styles.radioContainer}
+                  />
               </View>
 
               <View style={styles.radioGroup}>
@@ -454,9 +604,43 @@ export default function App() {
                   onChange={setFaturamento}
                   containerStyle={styles.radioContainer}
                 />
+                {faturamento === "CNPJ" ? 
+                    <View style={styles.inputGroup} id='nomeCNPJInput'>
+                      <Text style={styles.radioGroupTitle}>CNPJ do cliente *</Text>
+                      <TextInput
+                        keyboardType="numeric"
+                        ref={nomeInputRef}
+                        style={[
+                          styles.input,
+                          {
+                            padding: 12,
+                            backgroundColor: 'rgb(248, 249, 250)',
+                            borderColor: erroNomeCNPJ ? '#E74C3C' : '#E9ECEF',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                          },
+                        ]}
+                        placeholder="Digite o CNPJ do cliente"
+                        placeholderTextColor="#95a5a6"
+                        value={nomeCNPJ}
+                        onChangeText={(text) => {
+                          const formatted = formatCNPJ(text);
+                          setNomeCNPJ(formatted);
+                          if (formatted.trim() !== '') {
+                            setErroNomeCNPJ(false);
+                          }
+                        }}
+                      />
+                      {erroNomeCNPJ && (
+                        <Text style={styles.errorText}>
+                          ⚠️ O CNPJ do CNPJ é obrigatório.
+                        </Text>
+                      )}
+                  </View>
+                  :''}
               </View>
             </View>
-
+              
             {/* Seção de Equipamentos */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -575,11 +759,12 @@ export default function App() {
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Parcelas</Text>
                 <NumericInput
-                  value={parcelas}
-                  onValueChange={setParcelas}
-                  style={styles.input}
-                  min={1}
-                  max={21}
+                    value={parcelas}
+                    onValueChange={setParcelas}
+                    style={styles.input}
+                    min={1}
+                    max={21}
+                    disabled={parcelasDesabilitadas} // Use a nova variável de estado
                 />
               </View>
 
@@ -607,11 +792,6 @@ export default function App() {
                 <View style={styles.resultRow}>
                   <Text style={styles.resultLabel}>Base NF:</Text>
                   <Text style={styles.resultValue}>{formatarMoeda(baseNF)}</Text>
-                </View>
-
-                <View style={styles.resultRow}>
-                  <Text style={styles.resultLabel}>NF Produto:</Text>
-                  <Text style={styles.resultValue}>{formatarMoeda(produtoNF)}</Text>
                 </View>
 
                 <View style={styles.divider} />
@@ -667,7 +847,11 @@ export default function App() {
               descricao={observacaoOrcamento}
               tipoPagamento={pagamento}
               nomeVendedor={nomeVendedor}
+              nomeCliente={nomeCliente}
               validarNomeVendedor={validarNomeVendedor}
+              nomeCNPJ={nomeCNPJ}
+              validarNomeCNPJ={validarNomeCNPJ}
+              validarNomeCliente={validarNomeCliente}
             />
           </>
           )}

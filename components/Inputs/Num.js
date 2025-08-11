@@ -9,6 +9,7 @@ export default function NumericInput({
   inputStyle = {},
   min = 1,
   max,
+  disabled = false, // Adicione a propriedade disabled com um valor padrão
   ...props 
 }) {
   const [internalValue, setInternalValue] = useState(propValue.toString());
@@ -20,9 +21,8 @@ export default function NumericInput({
     }
   }, [propValue]);
 
-
-
   const handleChange = (text) => {
+    if (disabled) return; // Retorna se estiver desabilitado
     let numericValue = text.replace(/[^0-9]/g, '');
     setInternalValue(numericValue);
     
@@ -31,8 +31,8 @@ export default function NumericInput({
     }
   };
 
-
   const handleBlur = () => {
+    if (disabled) return; // Retorna se estiver desabilitado
     let val = parseInt(internalValue, 10);
     if (isNaN(val) || val < min) {
       val = min;
@@ -47,6 +47,7 @@ export default function NumericInput({
   };
 
   const increment = () => {
+    if (disabled) return; // Retorna se estiver desabilitado
     let val = parseInt(internalValue, 10);
     if (isNaN(val)) val = min - 1;
     let newVal = val + 1;
@@ -58,6 +59,7 @@ export default function NumericInput({
   };
 
   const decrement = () => {
+    if (disabled) return; // Retorna se estiver desabilitado
     let val = parseInt(internalValue, 10);
     if (isNaN(val)) val = min + 1;
     let newVal = val - 1;
@@ -70,8 +72,12 @@ export default function NumericInput({
 
   return (
     <View style={[styles.container, style]}>
-      <TouchableOpacity style={styles.button} onPress={decrement}>
-        <Text style={styles.buttonText}>−</Text>
+      <TouchableOpacity 
+        style={[styles.button, disabled && styles.buttonDisabled]} 
+        onPress={decrement}
+        disabled={disabled} // Passe a prop disabled para o botão
+      >
+        <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>−</Text>
       </TouchableOpacity>
 
       <TextInput
@@ -81,11 +87,16 @@ export default function NumericInput({
         onChangeText={handleChange}
         onBlur={handleBlur}
         placeholder={placeholder}
+        editable={!disabled} // Use editable para desabilitar a entrada de texto
         {...props}
       />
 
-      <TouchableOpacity style={styles.button} onPress={increment}>
-        <Text style={styles.buttonText}>＋</Text>
+      <TouchableOpacity 
+        style={[styles.button, disabled && styles.buttonDisabled]} 
+        onPress={increment}
+        disabled={disabled} // Passe a prop disabled para o botão
+      >
+        <Text style={[styles.buttonText, disabled && styles.buttonTextDisabled]}>＋</Text>
       </TouchableOpacity>
     </View>
   );
@@ -120,5 +131,12 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: '#333',
     fontWeight: 'bold',
+  },
+  // Novos estilos para quando o componente estiver desabilitado
+  buttonDisabled: {
+    backgroundColor: '#f5f5f5', // Cor de fundo mais clara
+  },
+  buttonTextDisabled: {
+    color: '#aaa', // Cor do texto mais clara
   },
 });
