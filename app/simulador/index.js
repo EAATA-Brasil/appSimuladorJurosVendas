@@ -117,7 +117,24 @@ export default function App() {
 
     return value;
   }
+  function formatCPF(value) {
+    // Remove tudo que não for número
+    value = value.replace(/\D/g, '');
 
+    // Limita a 11 dígitos (tamanho do CPF)
+    value = value.slice(0, 11);
+
+    // Aplica máscara do CPF passo a passo
+    if (value.length > 9) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, '$1.$2.$3-$4');
+    } else if (value.length > 6) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+    } else if (value.length > 3) {
+        value = value.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
+    }
+
+    return value;
+  }
 
   var somaValores = useMemo(() => {
     return valoresCalculados.reduce((a, b) => a + b, 0);
@@ -125,9 +142,9 @@ export default function App() {
 
   // Função para validar se o nome do vendedor foi preenchido
   const validarNomeCNPJ = () => {
+
     const nomeValido = nomeCNPJ.trim() !== '';
     setErroNomeCNPJ(!nomeValido);
-
     if (!nomeValido) {
       if(Platform.OS === 'web'){
         const inputElement = document.getElementById('nomeCNPJInput');      
@@ -219,7 +236,9 @@ export default function App() {
 
     carregarDados();
   }, []);
-
+  useEffect(() => {
+    setNomeCNPJ(''); // Limpa o campo quando o faturamento muda
+  }, [faturamento]);
   // Manipula seleção de equipamento
   const handleSelectEquipamento = (index, equipamento, observacao) => {
     const novosEquipamentos = [...equipamentosSelecionados];
@@ -295,7 +314,7 @@ export default function App() {
   ];
   
   const optionsLocalizacao = [
-    {label: 'SP / Outros estados sem Inscrição Estadual ', value: 'SP'},
+    {label: 'SP / Outros estados sem Inscrição Estadual', value: 'SP'},
     {label: 'Outros estados / CNPJ com Inscrição Estadual', value: 'Outros'},
   ];
   
@@ -604,40 +623,38 @@ export default function App() {
                   onChange={setFaturamento}
                   containerStyle={styles.radioContainer}
                 />
-                {faturamento === "CNPJ" ? 
-                    <View style={styles.inputGroup} id='nomeCNPJInput'>
-                      <Text style={styles.radioGroupTitle}>CNPJ do cliente *</Text>
-                      <TextInput
-                        keyboardType="numeric"
-                        ref={nomeInputRef}
-                        style={[
-                          styles.input,
-                          {
-                            padding: 12,
-                            backgroundColor: 'rgb(248, 249, 250)',
-                            borderColor: erroNomeCNPJ ? '#E74C3C' : '#E9ECEF',
-                            borderWidth: 2,
-                            borderRadius: 8,
-                          },
-                        ]}
-                        placeholder="Digite o CNPJ do cliente"
-                        placeholderTextColor="#95a5a6"
-                        value={nomeCNPJ}
-                        onChangeText={(text) => {
-                          const formatted = formatCNPJ(text);
-                          setNomeCNPJ(formatted);
-                          if (formatted.trim() !== '') {
-                            setErroNomeCNPJ(false);
-                          }
-                        }}
-                      />
-                      {erroNomeCNPJ && (
-                        <Text style={styles.errorText}>
-                          ⚠️ O CNPJ do CNPJ é obrigatório.
-                        </Text>
-                      )}
+                  <View style={styles.inputGroup} id='nomeCNPJInput'>
+                    <Text style={styles.radioGroupTitle}>{faturamento === "CNPJ" ? 'CNPJ do cliente' : 'CPF do cliente'}</Text>
+                    <TextInput
+                      keyboardType="numeric"
+                      ref={nomeInputRef}
+                      style={[
+                        styles.input,
+                        {
+                          padding: 12,
+                          backgroundColor: 'rgb(248, 249, 250)',
+                          borderColor: erroNomeCNPJ ? '#E74C3C' : '#E9ECEF',
+                          borderWidth: 2,
+                          borderRadius: 8,
+                        },
+                      ]}
+                      placeholder={faturamento === "CNPJ" ? 'Digite o CNPJ do cliente' : 'Digite o CPF do cliente'}
+                      placeholderTextColor="#95a5a6"
+                      value={nomeCNPJ}
+                      onChangeText={(text) => {
+                        const formatted = ( faturamento === "CNPJ"?formatCNPJ(text):formatCPF(text))
+                        setNomeCNPJ(formatted);
+                        if (formatted.trim() !== '') {
+                          setErroNomeCNPJ(false);
+                        }
+                      }}
+                    />
+                    {erroNomeCNPJ && (
+                      <Text style={styles.errorText}>
+                        {faturamento === "CNPJ" ? '⚠️ O CNPJ do cliente é obrigatório.' : '⚠️ O CPF do cliente é obrigatório.'}
+                      </Text>
+                    )}
                   </View>
-                  :''}
               </View>
             </View>
               

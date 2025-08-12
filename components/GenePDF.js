@@ -312,7 +312,7 @@ const PDFSimulacao = ({
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">Localização:</div>
-                <div class="info-value">${localizacao !== 'SP'? 'Outros Estados / CPF' : 'São Paulo / Sem inscrição MEI'}</div>
+                <div class="info-value">${localizacao !== 'SP'? 'Outros estados / CNPJ com Inscrição Estadual' : 'São Paulo / Outros estados sem Inscrição Estadual'}</div>
               </div>
               <div class="info-item">
                 <div class="info-label">Faturamento:</div>
@@ -362,8 +362,8 @@ const PDFSimulacao = ({
       Alert.alert('Aviso', 'Por favor, preencha o nome do cliente antes de gerar o PDF.');
       return;
     }
-    if (!validarNomeCNPJ() & faturamento != 'CPF') {
-      Alert.alert('Aviso', 'Por favor, preencha o nome do CNPJ antes de gerar o PDF.');
+    if (!validarNomeCNPJ()) {
+      Alert.alert('Aviso', 'Por favor, preencha o CPF/CNPJ do cliente antes de gerar o PDF.');
       return;
     }
 
@@ -420,8 +420,8 @@ const PDFSimulacao = ({
     alert('Por favor, preencha o nome do cliente antes de gerar o PDF.');
     return;
   }
-  if (!validarNomeCNPJ() & faturamento != 'CPF') {
-    alert('Por favor, preencha o nome do CNPJ antes de gerar o PDF.');
+  if (!validarNomeCNPJ()) {
+    Alert.alert('Aviso', 'Por favor, preencha o CPF/CNPJ do cliente antes de gerar o PDF.');
     return;
   }
   

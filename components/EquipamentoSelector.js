@@ -54,7 +54,24 @@ const EquipamentoSelector = ({
     setSearchText('');
     setSelectedGrupo(null);
   };
+  const ordemPersonalizada = {
+    "EAATA": 1,
+    "THINKCAR": 2,
+    "ACESSÓRIOS": 3,
+    "OUTROS EQUIPAMENTOS": 4,
+    "BATERIA": 5,
+    "TPMS": 6,
+    "ADAS": 7,
+    "ATUALIZAÇÕES": 8,
+    "SUPORTE TÉCNICO": 9
+  };
 
+  // 2. Ordena o array `marcas` conforme a ordem personalizada
+  const marcasOrdenadas = [...marcas].sort((a, b) => {
+    const prioridadeA = ordemPersonalizada[a.nome] || 999; // Se não existir, vai para o final
+    const prioridadeB = ordemPersonalizada[b.nome] || 999;
+    return prioridadeA - prioridadeB;
+  });
   return (
     <View style={styles.container}>
       <TouchableOpacity 
@@ -138,19 +155,21 @@ const EquipamentoSelector = ({
               </Text>
             </TouchableOpacity>
             
-            {marcas.map(marca => (
+            {marcasOrdenadas.map((marca) => (
               <TouchableOpacity
                 key={`marca-${marca.id}`}
                 style={[
                   styles.marcaButton,
-                  selectedGrupo === marca.id && styles.marcaButtonActive
+                  selectedGrupo === marca.id && styles.marcaButtonActive,
                 ]}
                 onPress={() => setSelectedGrupo(marca.id)}
               >
-                <Text style={[
-                  styles.marcaButtonText,
-                  selectedGrupo === marca.id && styles.marcaButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.marcaButtonText,
+                    selectedGrupo === marca.id && styles.marcaButtonTextActive,
+                  ]}
+                >
                   {marca.nome}
                 </Text>
               </TouchableOpacity>
