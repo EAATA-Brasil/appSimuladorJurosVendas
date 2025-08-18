@@ -378,40 +378,38 @@ export default function App() {
   const [parcelasDesabilitadas, setParcelasDesabilitadas] = useState(false);
 
   useEffect(() => {
-      // Verifique se 'equipamentosSelecionados' é um array válido e não está vazio.
-      if (!Array.isArray(equipamentosSelecionados) || equipamentosSelecionados.length === 0) {
-          setBoletoDisponivel(true);
-          setParcelasDesabilitadas(false);
-          return;
-      }
+    // Se não há equipamentos, habilita boleto e parcelas
+    if (!Array.isArray(equipamentosSelecionados) || equipamentosSelecionados.length === 0) {
+        setBoletoDisponivel(true);
+        setParcelasDesabilitadas(false);
+        return;
+    }
 
-      // Filtra para remover quaisquer valores nulos ou indefinidos do array.
-      const equipamentosValidos = equipamentosSelecionados.filter(equip => equip);
+    // Remove valores inválidos
+    const equipamentosValidos = equipamentosSelecionados.filter(equip => equip);
 
-      // Lógica para Boleto
-      // Verifica se algum equipamento não aceita boleto
-      const algumEquipamentoNaoAceitaBoleto = equipamentosValidos.some(equip => !equip.boleto);
-      
-      // Se algum equipamento não aceita boleto, o rádio de boleto deve sumir.
-      setBoletoDisponivel(!algumEquipamentoNaoAceitaBoleto);
+    // Lógica para Boleto
+    // Se pelo menos um equipamento aceita boleto, mantém habilitado
+    const algumEquipamentoAceitaBoleto = equipamentosValidos.some(equip => equip.boleto);
+    setBoletoDisponivel(algumEquipamentoAceitaBoleto);
 
-      // Se o boleto não estiver disponível, forçar a seleção de Cartao
-      if (algumEquipamentoNaoAceitaBoleto) {
-          setPagamento("Cartao");
-      }
+    // Se nenhum aceita boleto, força cartão
+    if (!algumEquipamentoAceitaBoleto) {
+        setPagamento("Cartao");
+        setEntrada(0)
+    }
 
-      // Lógica para Parcelas
-      // Verifica se todos os equipamentos são apenas à vista
-      const todosSaoAVista = equipamentosValidos.every(equip => equip.avista);
+    // Lógica para Parcelas
+    const todosSaoAVista = equipamentosValidos.every(equip => equip.avista);
 
-      // Se todos são à vista e há pelo menos um equipamento, desabilita as parcelas
-      if (todosSaoAVista) {
-          setParcelasDesabilitadas(true);
-          setParcelas(1); // Força para 1 parcela
-      } else {
-          setParcelasDesabilitadas(false);
-      }
-  }, [equipamentosSelecionados]);
+    if (todosSaoAVista) {
+        setParcelasDesabilitadas(true);
+        setParcelas(1);
+    } else {
+        setParcelasDesabilitadas(false);
+    }
+}, [equipamentosSelecionados]);
+
 
   // Modifique o useEffect que calcula o maxParcelas para ser executado apenas se parcelas não estiver desabilitado
   useEffect(() => {
