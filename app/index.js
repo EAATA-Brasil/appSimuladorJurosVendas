@@ -145,7 +145,20 @@ export default function App() {
 
     const nomeValido = nomeCNPJ.trim() !== '';
     setErroNomeCNPJ(!nomeValido);
-    if (!nomeValido) {
+
+    const somenteNumeros = nomeCNPJ.replace(/\D/g, '');
+    let valido = false;
+    if (faturamento === 'CPF') {
+      valido = somenteNumeros.length === 11;
+    } else if (faturamento === 'CNPJ') {
+      valido = somenteNumeros.length === 14;
+    } else {
+      // se não tiver tipo definido, só valida se não for vazio
+      valido = nomeCNPJ.trim() !== '';
+    }
+    setErroNomeCNPJ(!valido)
+
+    if (!nomeValido || !valido) {
       if(Platform.OS === 'web'){
         const inputElement = document.getElementById('nomeCNPJInput');      
         if (inputElement) {
@@ -649,7 +662,7 @@ export default function App() {
                     />
                     {erroNomeCNPJ && (
                       <Text style={styles.errorText}>
-                        {faturamento === "CNPJ" ? '⚠️ O CNPJ do cliente é obrigatório.' : '⚠️ O CPF do cliente é obrigatório.'}
+                        {faturamento === "CNPJ" ? '⚠️ O CNPJ do cliente inválido.' : '⚠️ O CPF do cliente inválido.'}
                       </Text>
                     )}
                   </View>

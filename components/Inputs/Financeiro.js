@@ -25,8 +25,11 @@ export default function FinanceiroInput({
 
   // Atualiza o valor exibido quando o propValue muda
   useEffect(() => {
-    setDisplayValue(propValue.toString());
-  }, [propValue]);
+    if (tipoDesconto !== "porcentagem") {
+      setDisplayValue(propValue.toString());
+    }
+  }, [propValue, tipoDesconto]);
+
 
   const formatDisplayValue = (value) => {
     const numeric = parseInt(value || '0', 10);

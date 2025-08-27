@@ -250,6 +250,8 @@ const PDFSimulacao = ({
         <body>
           <div class="header">
             <img src="data:image/svg+xml;base64,${btoa(logoEAATA)}" alt="Logo EAATA" class="logo"/>
+            <br>
+            <p style="color:#009EE0">CNPJ: 40.818.167/0007-89<br></p>
             <h1 class="title">Orçamento</h1>
             Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}<br>
           </div>
@@ -345,7 +347,7 @@ const PDFSimulacao = ({
             ${localizacao !== 'SP' && faturamento == 'CNPJ' ? 'Diferencial de alíquota (DIFAL) de responsabilidade do comprador.<br>' : ''}
             </p>
             <p class="company">EAATA Brasil</p>
-            <a href="https://br.eaata.pro">br.eaata.pro | Número Um Em Scanner Automotivos</a>
+            <a href="https://br.eaata.pro">https://br.eaata.pro | Número Um Em Scanner Automotivos</a>
           </div>
           
         </body>
