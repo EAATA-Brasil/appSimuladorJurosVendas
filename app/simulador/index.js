@@ -11,8 +11,8 @@ const API_BASE_URL = 'http://82.25.71.76/api'
 //   : 'http://82.25.71.76/api'; // Mesmo IP para APK
 
 const equipamentos_URL = `${API_BASE_URL}/equipamentos/`;
-const tipo_equipamento_URL = `${API_BASE_URL}/tipoEquipamento/`;
-const marca_equipamento_URL = `${API_BASE_URL}/marcaEquipamento/`;
+const tipo_equipamento_URL = `${API_BASE_URL}/tiposEquipamento/`;
+const marca_equipamento_URL = `${API_BASE_URL}/marcasEquipamento/`;
 
 export default function App() {
   const taxa = 0.0292;
@@ -231,7 +231,6 @@ export default function App() {
           fetch(tipo_equipamento_URL,{mode: 'cors'}),
           fetch(marca_equipamento_URL, {mode: 'cors'})
         ]);
-        
         const dataEquipamentos = await resEquipamentos.json();
         const dataGrupos = await resGrupos.json();
         const dataMarcas = await resMarcas.json();

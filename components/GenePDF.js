@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 const PDFSimulacao = ({
   equipamentos,
@@ -23,6 +25,59 @@ const PDFSimulacao = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
+
+  // Função para forçar download do arquivo (WEB)
+  const forceDownloadWeb = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'simulacao.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Função para lidar com download em React Native
+  const handleNativeDownload = async (blob) => {
+    try {
+      // Converter blob para base64
+      const base64data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      
+      // Extrair apenas a parte base64 (remover o prefixo data:application/pdf;base64,)
+      const base64 = base64data.split(',')[1];
+      
+      // Criar nome do arquivo
+      const fileName = `Simulação_${nomeCliente}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+      
+      // Escrever arquivo
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      // Compartilhar/abrir o arquivo
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Salvar Simulação de Venda',
+          UTI: 'com.adobe.pdf'
+        });
+      } else {
+        Alert.alert('Sucesso', `PDF salvo em: ${fileUri}`);
+      }
+      
+    } catch (err) {
+      console.error('Erro ao salvar PDF:', err);
+      Alert.alert('Erro', 'Não foi possível salvar o PDF.');
+      throw err;
+    }
+  };
 
   const handleGeneratePDF = async () => {
     if (!validarNomeVendedor()) {
@@ -61,8 +116,8 @@ const PDFSimulacao = ({
         nomeCliente: nomeCliente
       };
 
-      // URL base ajustável para diferentes ambientes
-     const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
+      // URL base
+      const API_BASE_URL = 'http://82.25.71.76';
 
       // Fazer a requisição POST para sua API Django
       const response = await fetch(`${API_BASE_URL}/api/generate-pdf/`, {
@@ -81,15 +136,15 @@ const PDFSimulacao = ({
       // Obter o PDF como blob
       const pdfBlob = await response.blob();
       
-      // Criar URL para o blob e abrir em nova aba
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      
-      // Para web: abrir em nova aba
-      if (typeof window !== 'undefined') {
-        window.open(pdfUrl, '_blank');
+      // Plataforma específica
+      if (Platform.OS === 'web') {
+        // Para web: forçar download
+        forceDownloadWeb(pdfBlob, `simulacao_${nomeCliente}_${new Date().toISOString().slice(0, 10)}.pdf`);
+        Alert.alert('Sucesso', 'PDF baixado com sucesso!');
+      } else {
+        // Para React Native
+        await handleNativeDownload(pdfBlob);
       }
-      
-      Alert.alert('Sucesso', 'PDF gerado com sucesso!');
 
     } catch (err) {
       console.error('Erro na geração do PDF:', err);
@@ -115,7 +170,9 @@ const PDFSimulacao = ({
         {isGenerating ? (
           <ActivityIndicator color="white" />
         ) : (
-          <Text style={styles.buttonText}>GERAR PDF DA SIMULAÇÃO</Text>
+          <Text style={styles.buttonText}>
+            {Platform.OS === 'web' ? 'BAIXAR PDF' : 'GERAR PDF'}
+          </Text>
         )}
       </TouchableOpacity>
 

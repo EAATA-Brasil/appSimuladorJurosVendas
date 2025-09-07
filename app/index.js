@@ -11,8 +11,8 @@ const API_BASE_URL = 'http://82.25.71.76/api'
 //   : 'http://82.25.71.76/api'; // Mesmo IP para APK
 
 const equipamentos_URL = `${API_BASE_URL}/equipamentos/`;
-const tipo_equipamento_URL = `${API_BASE_URL}/tipoEquipamento/`;
-const marca_equipamento_URL = `${API_BASE_URL}/marcaEquipamento/`;
+const tipo_equipamento_URL = `${API_BASE_URL}/tiposEquipamento/`;
+const marca_equipamento_URL = `${API_BASE_URL}/marcasEquipamento/`;
 
 export default function App() {
   const taxa = 0.0292;
@@ -231,7 +231,6 @@ export default function App() {
           fetch(tipo_equipamento_URL,{mode: 'cors'}),
           fetch(marca_equipamento_URL, {mode: 'cors'})
         ]);
-        
         const dataEquipamentos = await resEquipamentos.json();
         const dataGrupos = await resGrupos.json();
         const dataMarcas = await resMarcas.json();
@@ -391,37 +390,41 @@ export default function App() {
   const [parcelasDesabilitadas, setParcelasDesabilitadas] = useState(false);
 
   useEffect(() => {
-    // Se não há equipamentos, habilita boleto e parcelas
-    if (!Array.isArray(equipamentosSelecionados) || equipamentosSelecionados.length === 0) {
-        setBoletoDisponivel(true);
-        setParcelasDesabilitadas(false);
-        return;
-    }
+  // Se não há equipamentos selecionados, mantém boleto disponível
+  if (!Array.isArray(equipamentosSelecionados) || equipamentosSelecionados.length === 0) {
+    setBoletoDisponivel(true);
+    setParcelasDesabilitadas(false);
+    return;
+  }
 
-    // Remove valores inválidos
-    const equipamentosValidos = equipamentosSelecionados.filter(equip => equip);
+  // Remove valores inválidos
+  const equipamentosValidos = equipamentosSelecionados.filter(e => e != null);
 
-    // Lógica para Boleto
-    // Se pelo menos um equipamento aceita boleto, mantém habilitado
-    const algumEquipamentoAceitaBoleto = equipamentosValidos.some(equip => equip.boleto);
-    setBoletoDisponivel(algumEquipamentoAceitaBoleto);
+  // Se não há equipamentos válidos selecionados ainda, mantém boleto disponível
+  if (equipamentosValidos.length === 0) {
+    setBoletoDisponivel(true);
+    setParcelasDesabilitadas(false);
+    return;
+  }
 
-    // Se nenhum aceita boleto, força cartão
-    if (!algumEquipamentoAceitaBoleto) {
-        setPagamento("Cartao");
-        setEntrada(0)
-    }
+  // Lógica para Boleto - só desabilita se PELO MENOS UM equipamento NÃO aceitar boleto
+  const todosAceitamBoleto = equipamentosValidos.every(equip => equip.boleto);
+  setBoletoDisponivel(todosAceitamBoleto);
 
-    // Lógica para Parcelas
-    const todosSaoAVista = equipamentosValidos.every(equip => equip.avista);
+  // Se algum não aceita boleto, força cartão
+  if (!todosAceitamBoleto && pagamento === "Boleto") {
+    setPagamento("Cartao");
+    setEntrada(0);
+  }
 
-    if (todosSaoAVista) {
-        setParcelasDesabilitadas(true);
-        setParcelas(1);
-    } else {
-        setParcelasDesabilitadas(false);
-    }
-}, [equipamentosSelecionados]);
+  // Lógica para Parcelas (mantém a mesma)
+  const todosSaoAVista = equipamentosValidos.every(equip => equip.avista);
+  setParcelasDesabilitadas(todosSaoAVista);
+
+  if (todosSaoAVista) {
+    setParcelas(1);
+  }
+}, [equipamentosSelecionados, pagamento]);
 
 
   // Modifique o useEffect que calcula o maxParcelas para ser executado apenas se parcelas não estiver desabilitado
