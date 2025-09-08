@@ -407,12 +407,12 @@ export default function App() {
     return;
   }
 
-  // Lógica para Boleto - só desabilita se PELO MENOS UM equipamento NÃO aceitar boleto
-  const todosAceitamBoleto = equipamentosValidos.every(equip => equip.boleto);
-  setBoletoDisponivel(todosAceitamBoleto);
+  // Lógica CORRIGIDA para Boleto - habilita se PELO MENOS UM equipamento aceitar boleto
+  const algumAceitaBoleto = equipamentosValidos.some(equip => equip.boleto);
+  setBoletoDisponivel(algumAceitaBoleto);
 
-  // Se algum não aceita boleto, força cartão
-  if (!todosAceitamBoleto && pagamento === "Boleto") {
+  // Se nenhum aceita boleto, força cartão
+  if (!algumAceitaBoleto && pagamento === "Boleto") {
     setPagamento("Cartao");
     setEntrada(0);
   }
@@ -424,7 +424,7 @@ export default function App() {
   if (todosSaoAVista) {
     setParcelas(1);
   }
-}, [equipamentosSelecionados, pagamento]);
+  }, [equipamentosSelecionados, pagamento]);
 
 
   // Modifique o useEffect que calcula o maxParcelas para ser executado apenas se parcelas não estiver desabilitado
