@@ -407,7 +407,7 @@ useEffect(() => {
     setParcelasDesabilitadas(false);
     return;
   }
-
+  
   // Lógica CORRIGIDA para Boleto - habilita se PELO MENOS UM equipamento aceitar boleto
   const algumAceitaBoleto = equipamentosValidos.some(equip => equip.boleto);
   setBoletoDisponivel(algumAceitaBoleto);

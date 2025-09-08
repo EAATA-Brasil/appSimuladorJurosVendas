@@ -26,6 +26,16 @@ const PDFSimulacao = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
 
+  // Função para detectar se é Safari
+  const detectSafari = () => {
+    if (Platform.OS !== 'web') return false;
+    
+    const userAgent = navigator.userAgent;
+    const isChrome = userAgent.includes('Chrome') || userAgent.includes('CriOS');
+    const isSafari = !isChrome;
+    return isSafari;
+  };
+
   // Função para forçar download do arquivo (WEB)
   const forceDownloadWeb = (blob, filename) => {
     const url = URL.createObjectURL(blob);
@@ -36,6 +46,19 @@ const PDFSimulacao = ({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  // Função para abrir PDF no visualizador do navegador
+  const openPDFInViewer = (blob) => {
+    const url = URL.createObjectURL(blob);
+    
+    // Abrir o PDF no visualizador do navegador
+    window.open(url, '_blank');
+    
+    // Limpar URL após um tempo
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
   };
 
   // Função para lidar com download em React Native
@@ -135,12 +158,24 @@ const PDFSimulacao = ({
 
       // Obter o PDF como blob
       const pdfBlob = await response.blob();
+      const filename = `simulacao_${nomeCliente}_${new Date().toISOString().slice(0, 10)}.pdf`;
       
       // Plataforma específica
       if (Platform.OS === 'web') {
-        // Para web: forçar download
-        forceDownloadWeb(pdfBlob, `simulacao_${nomeCliente}_${new Date().toISOString().slice(0, 10)}.pdf`);
-        Alert.alert('Sucesso', 'PDF baixado com sucesso!');
+        if(detectSafari()){
+          forceDownloadWeb(pdfBlob, filename);
+        }else{
+          // Para todos os navegadores: tentar abrir no visualizador primeiro
+          try {
+            openPDFInViewer(pdfBlob);
+            Alert.alert('Sucesso', 'PDF aberto no visualizador!');
+          } catch (viewerError) {
+            // Se não conseguiu abrir no visualizador, fazer download
+            console.log('Erro ao abrir no visualizador, fazendo download:', viewerError);
+            forceDownloadWeb(pdfBlob, filename);
+            Alert.alert('Sucesso', 'PDF baixado com sucesso!');
+          }
+        }
       } else {
         // Para React Native
         await handleNativeDownload(pdfBlob);
@@ -171,7 +206,7 @@ const PDFSimulacao = ({
           <ActivityIndicator color="white" />
         ) : (
           <Text style={styles.buttonText}>
-            {Platform.OS === 'web' ? 'BAIXAR PDF' : 'GERAR PDF'}
+            {Platform.OS === 'web' ? 'VISUALIZAR PDF' : 'GERAR PDF'}
           </Text>
         )}
       </TouchableOpacity>
