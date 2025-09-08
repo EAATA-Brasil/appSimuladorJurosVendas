@@ -390,7 +390,7 @@ export default function App() {
   const [parcelasDesabilitadas, setParcelasDesabilitadas] = useState(false);
 
 
-  useEffect(() => {
+useEffect(() => {
   // Se não há equipamentos selecionados, mantém boleto disponível
   if (!Array.isArray(equipamentosSelecionados) || equipamentosSelecionados.length === 0) {
     setBoletoDisponivel(true);
@@ -408,12 +408,12 @@ export default function App() {
     return;
   }
 
-  // Lógica para Boleto - só desabilita se PELO MENOS UM equipamento NÃO aceitar boleto
-  const todosAceitamBoleto = equipamentosValidos.every(equip => equip.boleto);
-  setBoletoDisponivel(todosAceitamBoleto);
+  // Lógica CORRIGIDA para Boleto - habilita se PELO MENOS UM equipamento aceitar boleto
+  const algumAceitaBoleto = equipamentosValidos.some(equip => equip.boleto);
+  setBoletoDisponivel(algumAceitaBoleto);
 
-  // Se algum não aceita boleto, força cartão
-  if (!todosAceitamBoleto && pagamento === "Boleto") {
+  // Se nenhum aceita boleto, força cartão
+  if (!algumAceitaBoleto && pagamento === "Boleto") {
     setPagamento("Cartao");
     setEntrada(0);
   }
