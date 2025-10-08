@@ -142,3 +142,5 @@ O `appSimuladorJurosVendas` é um projeto Expo bem estruturado, com foco em simu
 
 
 
+## 8. Futuras correções
+- Colocar para não receber tradução e servir em português
