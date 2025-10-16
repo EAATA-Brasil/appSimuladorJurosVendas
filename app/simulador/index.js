@@ -4,7 +4,11 @@ import EquipamentoSelector from '../../components/EquipamentoSelector';
 import PDFSimulacao from '../../components/GenePDF';
 import { FinanceiroInput, NumericInput, Radio } from '../../components/Inputs';
 
-const API_BASE_URL = 'http://82.25.71.76/api'
+const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+
+const API_BASE_URL = isHttps
+  ? 'https://eaatainterno.duckdns.org/api'
+  : 'http://82.25.71.76/api';
 
 // process.env.NODE_ENV === 'development' 
 //   ? 'http://192.168.18.150:8000/api' 

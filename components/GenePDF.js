@@ -37,15 +37,23 @@ const PDFSimulacao = ({
   };
 
   // Função para forçar download do arquivo (WEB)
-  const forceDownloadWeb = (blob, filename) => {
-    const url = URL.createObjectURL(blob);
+  const forceDownloadWeb = (blob, filename = 'simulacao.pdf') => {
+    // Garante que o blob tenha o tipo correto
+    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+
+    const url = URL.createObjectURL(pdfBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename || 'simulacao.pdf';
+    a.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`; // força extensão .pdf
+
+    // Necessário para alguns navegadores (Safari, Firefox)
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    // Libera o objeto após um pequeno delay (para evitar "revoked before download")
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   // Função para abrir PDF em nova aba
@@ -158,8 +166,12 @@ const PDFSimulacao = ({
       nomeCliente: nomeCliente
     };
 
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+
     // URL base
-    const API_BASE_URL = 'http://82.25.71.76';
+    const API_BASE_URL = isHttps
+  ? 'https://eaatainterno.duckdns.org'
+  : 'http://82.25.71.76';
 
     // Fazer a requisição POST para sua API Django - HEADERS CORRIGIDOS
     const response = await fetch(`${API_BASE_URL}/api/generate-pdf/`, {
@@ -187,7 +199,9 @@ const PDFSimulacao = ({
 
     // Obter o PDF como blob
     const pdfBlob = await response.blob();
-    const filename = `simulacao_${nomeCliente}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const filename = `Simulacao_${nomeCliente.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+forceDownloadWeb(pdfBlob, filename);
+
     
     // Plataforma específica
     if (Platform.OS === 'web') {
