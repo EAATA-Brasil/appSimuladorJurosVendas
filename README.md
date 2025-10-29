@@ -141,6 +141,50 @@ As dependências do projeto, conforme listado no `package.json`, incluem:
 O `appSimuladorJurosVendas` é um projeto Expo bem estruturado, com foco em simulação financeira e geração de relatórios em PDF. A utilização do Expo Router simplifica a navegação, e a modularidade dos componentes facilita a manutenção e expansão. As dependências indicam um desenvolvimento robusto com foco em uma experiência de usuário rica e funcionalidades completas para a plataforma móvel e web.
 
 
+## 8. Para Gerar App Web e Integrar com o Django
 
-## 8. Futuras correções
-- Colocar para não receber tradução e servir em português
+Para gerar a versão web do aplicativo e integrá-la ao projeto Django [FormSuporte](https://github.com/EAATA-Brasil/FormSuporte), siga as etapas abaixo:
+
+1. **Gerar a versão web do app:**
+
+   ```bash
+   npm run build:web
+   ```
+
+   Esse comando criará os arquivos HTML, CSS e JavaScript da versão web dentro da pasta `dist`.
+
+2. **Copiar os HTMLs para o Django:**
+
+   - Copie os arquivos `.html` gerados em `dist` para dentro da pasta de **templates** do app `simulador` no projeto Django:
+     ```
+     FormSuporte/FormSuporte/simulador/templates/simulador/
+     ```
+
+   - **Importante:**  
+     Antes de salvar os arquivos HTML no Django, ajuste o código para que o carregamento dos arquivos estáticos seja feito corretamente.  
+     Adicione no **início** do arquivo:
+
+     ```django
+     {% load static %}
+     ```
+
+     E no **final**, substitua os carregamentos diretos de JavaScript (como `<script src="..."></script>`) por:
+
+     ```django
+     <script src="{% static 'simulador/seu-arquivo.js' %}"></script>
+     ```
+
+     Isso garante que o Django carregue corretamente os arquivos estáticos.
+
+3. **Copiar os arquivos JavaScript:**
+
+   - Copie o(s) arquivo(s) `.js` gerado(s) também dentro da pasta `dist` para:
+     ```
+     FormSuporte/FormSuporte/static/simulador/
+     ```
+   - Edite o conteúdo do único arquivo JavaScript (se houver um principal) conforme necessário para ajustar caminhos ou variáveis de ambiente do Django.
+
+4. **Verificação final:**
+
+   - Certifique-se de que o `settings.py` do Django está configurado corretamente para servir arquivos estáticos.
+   - Teste a renderização acessando a rota do simulador dentro do projeto `FormSuporte`.
