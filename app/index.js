@@ -366,21 +366,24 @@ export default function App() {
       if (localizacao === "SP") {
         defaultEntrada = equipamentosSelecionados.reduce((sum, equip) => {
           if (equip && equip.entrada_sp_cnpj) {
-            return sum + equip.entrada_sp_cnpj;
+            const quantidade = parseInt(quantidades[equipamentosSelecionados.indexOf(equip)], 10) || 1;
+            return sum + (equip.entrada_sp_cnpj * quantidade);
           }
           return sum;
         }, 0);
       } else if (localizacao === "Outros" && faturamento === "CNPJ") {
         defaultEntrada = equipamentosSelecionados.reduce((sum, equip) => {
           if (equip && equip.entrada_outros_cnpj) {
-            return sum + equip.entrada_outros_cnpj;
+            const quantidade = parseInt(quantidades[equipamentosSelecionados.indexOf(equip)], 10) || 1;
+            return sum + (equip.entrada_outros_cnpj * quantidade);
           }
           return sum;
         }, 0);
       } else if (localizacao === "Outros" && faturamento === "CPF") {
         defaultEntrada = equipamentosSelecionados.reduce((sum, equip) => {
           if (equip && equip.entrada_outros_cpf) {
-            return sum + equip.entrada_outros_cpf;
+            const quantidade = parseInt(quantidades[equipamentosSelecionados.indexOf(equip)], 10) || 1;
+            return sum + (equip.entrada_outros_cpf * quantidade);
           }
           return sum;
         }, 0);
@@ -389,7 +392,7 @@ export default function App() {
       defaultEntrada = 0
     }
     setEntrada(Math.round(defaultEntrada));
-  }, [localizacao, pagamento, faturamento, equipamentosSelecionados]);
+  }, [localizacao, pagamento, faturamento, equipamentosSelecionados,quantidades]);
   const [boletoDisponivel, setBoletoDisponivel] = useState(true);
   const [parcelasDesabilitadas, setParcelasDesabilitadas] = useState(false);
 
