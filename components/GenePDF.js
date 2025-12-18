@@ -238,12 +238,10 @@ const PDFSimulacao = ({
       const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
 
       // Define a URL base da API (alternando entre HTTPS e HTTP)
-      const API_BASE_URL = isHttps
-        ? 'https://eaatainterno.duckdns.org'
-        : 'http://82.25.71.76';
+      const API_BASE_URL = "/api"
 
       // --- 4. Requisição POST para a API Django ---
-      const response = await fetch(`${API_BASE_URL}/api/generate-pdf/`, {
+      const response = await fetch(`${API_BASE_URL}/generate-pdf/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

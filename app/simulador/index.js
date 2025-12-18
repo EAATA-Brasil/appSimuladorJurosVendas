@@ -6,13 +6,7 @@ import { FinanceiroInput, NumericInput, Radio } from '../../components/Inputs';
 
 const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
 
-const API_BASE_URL = isHttps
-  ? 'https://eaatainterno.duckdns.org/api'
-  : 'http://82.25.71.76/api';
-
-// process.env.NODE_ENV === 'development' 
-//   ? 'http://192.168.18.150:8000/api' 
-//   : 'http://82.25.71.76/api'; // Mesmo IP para APK
+const API_BASE_URL = '/api'
 
 const equipamentos_URL = `${API_BASE_URL}/equipamentos/`;
 const tipo_equipamento_URL = `${API_BASE_URL}/tiposEquipamento/`;

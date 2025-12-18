@@ -104,7 +104,7 @@
       "eas": {
         "projectId": "4621528f-21be-49b5-a6a7-a661e54f2e29"
       },
-      "apiUrl": "http://82.25.71.76/api"
+      "apiUrl": "http://eaatasimulator/api"
     },
     "platforms": [
       "ios",
