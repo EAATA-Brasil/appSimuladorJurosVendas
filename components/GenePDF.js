@@ -46,6 +46,7 @@ const PDFSimulacao = ({
   validarNomeCNPJ,
   nomeCliente,
   validarNomeCliente,
+  frete
 }) => {
   // Estado para controlar se a geração do PDF está em andamento (para desabilitar o botão)
   const [isGenerating, setIsGenerating] = useState(false);
@@ -230,7 +231,8 @@ const PDFSimulacao = ({
         tipoPagamento: tipoPagamento,
         nomeVendedor: nomeVendedor,
         nomeCNPJ: nomeCNPJ,
-        nomeCliente: nomeCliente
+        nomeCliente: nomeCliente,
+        frete: frete,
       };
 
       // --- 3. Determinação da URL Base da API ---

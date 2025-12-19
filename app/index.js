@@ -24,29 +24,30 @@ export default function App() {
   const [erroNomeCNPJ, setErroNomeCNPJ] = useState(false);
   const [nomeCliente, setNomeCliente] = useState('');
   const [erroNomeCliente, setErroNomeCliente] = useState(false);
-
+  
   const nomeInputRef = useRef(null);
   const scrollViewRef = useRef(null);
-
+  
   // Estados para equipamentos e quantidades
   const [equipamentosSelecionados, setEquipamentosSelecionados] = useState([null]);
   const [quantidades, setQuantidades] = useState(['1']);
   const [valoresCalculados, setValoresCalculados] = useState(['1']);
   const [hasDiagnostico , setHasDiagnostico] = useState()
-
+  
   const [observacao, setObservacao] = useState('')
   const [observacaoOrcamento, setObservacaoOrcamento] = useState([])
-
+  
   // Estados para os radio buttons
   const [pagamento, setPagamento] = useState("Boleto");
   const [localizacao, setLocalizacao] = useState("SP");
   const [faturamento, setFaturamento] = useState("CNPJ");
   const [condicao, setCondicao] = useState("Normal");
-
+  
   // Cálculo de valor final
   const [parcelas, setParcelas] = useState(12); 
   const [entrada, setEntrada] = useState(0); 
   const [desconto, setDesconto] = useState(0); 
+  const [frete, setFrete] = useState(0);
 
   // Variáveis automáticas
   const [baseNF, setBaseNF] = useState(0);
@@ -334,7 +335,7 @@ export default function App() {
 
   // Cálculo da base NF
   useEffect(() => {
-    let total = somaValores;
+    let total = somaValores + frete;
 
     if (condicao === 'Normal') {
       total = total - desconto;
@@ -451,7 +452,7 @@ useEffect(() => {
 
   // Cálculo de valor da parcela
   useEffect(() => {
-    let total = somaValores - entrada - desconto - descFiscal 
+    let total = somaValores - entrada - desconto - descFiscal + frete
     
     if (pagamento === "Boleto") {
       if (taxa <= 0) {
@@ -476,13 +477,13 @@ useEffect(() => {
 
   // NF Produto
   useEffect(() => {
-    
-    setProdutoNF((pagamento === 'Boleto' && condicao === 'Normal') ? (parseInt(entrada?entrada : 0) + (valorParcela * parcelas)) : baseNF);
+    setProdutoNF((pagamento === 'Boleto' && condicao === 'Normal') ? (parseInt(entrada?entrada : 0) + (valorParcela * parcelas) + frete) : baseNF);
   }, [condicao, pagamento, entrada, parcelas, valorParcela, baseNF]);
 
   useEffect(() => {
-    setValorTotal(somaValores - descFiscal - desconto);
-  }, [somaValores, descFiscal, desconto]);
+    setValorTotal(somaValores - descFiscal - desconto + frete);
+  }, [somaValores, descFiscal, desconto, frete]);
+
 
   useEffect(() => {
     const novosValores = equipamentosSelecionados.map((equipamento, index) => {
@@ -809,6 +810,16 @@ useEffect(() => {
                   valorTotal={somaValores}
                 />
               </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Frete</Text>
+                <FinanceiroInput
+                  value={frete}
+                  onValueChange={setFrete}
+                  style={styles.input}
+                  tipoValor={'numero'}
+                />
+              </View>
+
             </View>
 
             {/* Seção de Resultados */}
@@ -884,6 +895,7 @@ useEffect(() => {
               nomeCNPJ={nomeCNPJ}
               validarNomeCNPJ={validarNomeCNPJ}
               validarNomeCliente={validarNomeCliente}
+              frete={frete}
             />
           </>
           )}
