@@ -27,6 +27,7 @@ import * as Sharing from 'expo-sharing';
  * @param {string} nomeCliente - Nome do cliente.
  * @param {Function} validarNomeCliente - Função para validar o nome do cliente.
  */
+
 const PDFSimulacao = ({
   equipamentos,
   entrada,
@@ -75,27 +76,35 @@ const PDFSimulacao = ({
    * @param {Blob} blob - O objeto Blob contendo os dados do PDF.
    * @param {string} [filename='simulacao.pdf'] - O nome do arquivo para download.
    */
+  const getFilenameFromDisposition = (disposition) => {
+    if (!disposition) return null;
+
+    // filename*=UTF-8''...
+    const utf8 = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+    if (utf8?.[1]) return decodeURIComponent(utf8[1]).replace(/["']/g, '');
+
+    // filename="..."
+    const normal = disposition.match(/filename\s*=\s*"?([^"]+)"?/i);
+    return normal?.[1] || null;
+  };
+
   const forceDownloadWeb = (blob, filename = 'simulacao.pdf') => {
-    // Garante que o blob tenha o tipo correto (application/pdf)
     const pdfBlob = new Blob([blob], { type: 'application/pdf' });
 
-    // Cria uma URL temporária para o Blob
     const url = URL.createObjectURL(pdfBlob);
-    // Cria um elemento <a> (link) invisível
     const a = document.createElement('a');
     a.href = url;
-    // Define o nome do arquivo, garantindo a extensão .pdf
-    a.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`; 
+    a.download = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
 
-    // Simula o clique no link para iniciar o download
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
 
-    // Libera a URL temporária para evitar vazamento de memória (depois de um pequeno delay)
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // dá tempo do browser iniciar o download
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
+
 
   /**
    * Tenta abrir o PDF em uma nova aba do navegador.
@@ -104,14 +113,15 @@ const PDFSimulacao = ({
    */
   const openPDFInNewTab = (blob) => {
     const url = URL.createObjectURL(blob);
-    // Tenta abrir em nova aba. Pode ser bloqueado pelo popup blocker.
     const newWindow = window.open(url, '_blank');
-    
-    // Limpa a URL temporária após um tempo
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
+
+    const timer = setInterval(() => {
+      if (!newWindow || newWindow.closed) {
+        clearInterval(timer);
+        URL.revokeObjectURL(url);
+      }
     }, 1000);
-    
+
     return newWindow;
   };
 
@@ -232,7 +242,7 @@ const PDFSimulacao = ({
         nomeVendedor: nomeVendedor,
         nomeCNPJ: nomeCNPJ,
         nomeCliente: nomeCliente,
-        frete: frete,
+        frete: Number(String(frete ?? 0).replace(/[^\d.-]/g, '')) || 0,
       };
 
       // --- 3. Determinação da URL Base da API ---
@@ -269,47 +279,25 @@ const PDFSimulacao = ({
       }
 
       // --- 6. Processamento da Resposta (PDF Blob) ---
-      const pdfBlob = await response.blob(); // Obtém o corpo da resposta como Blob
-      // Cria um nome de arquivo padronizado
-      const filename = `Simulacao_${nomeCliente.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
-      
-      // A linha abaixo parece ser um resquício de teste e pode ser redundante/removida,
-      // pois a lógica de plataforma específica logo abaixo já trata o download.
-      // forceDownloadWeb(pdfBlob, filename);
+      const pdfBlob = await response.blob();
+
+      // Fallback: seu nome padrão
+      const fallbackFilename =
+        `Simulacao_${nomeCliente.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+      // Tenta usar o nome vindo do Django (Content-Disposition)
+      const disposition = response.headers.get('content-disposition');
+      const serverFilename = getFilenameFromDisposition(disposition);
+
+      // Nome final
+      const finalFilename = serverFilename || fallbackFilename;
 
       // --- 7. Lógica de Download/Visualização por Plataforma ---
       if (Platform.OS === 'web') {
-        // --- Lógica Web ---
-        if (isSafari()) {
-          // Safari: Força o download (o Safari tem problemas com openPDFInNewTab)
-          forceDownloadWeb(pdfBlob, filename);
-          Alert.alert('Sucesso', 'PDF baixado com sucesso!');
-        } else {
-          // Outros navegadores (Chrome, Firefox, etc.): Tenta abrir em nova aba primeiro
-          try {
-            const newWindow = openPDFInNewTab(pdfBlob);
-            
-            // Verifica se o popup blocker impediu a abertura
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-              throw new Error('Popup bloqueado. Tentando visualizador alternativo.');
-            }
-            
-            Alert.alert('Sucesso', 'PDF aberto em nova aba!');
-          } catch (tabError) {
-            console.log('Erro ao abrir em nova aba, tentando visualizador:', tabError);
-            
-            // Se falhar (popup bloqueado), tenta o visualizador (iframe)
-            try {
-              openPDFInViewer(pdfBlob);
-              Alert.alert('Sucesso', 'PDF aberto no visualizador!');
-            } catch (viewerError) {
-              // Se o visualizador também falhar, força o download como último recurso
-              console.log('Erro ao abrir no visualizador, fazendo download:', viewerError);
-              forceDownloadWeb(pdfBlob, filename);
-              Alert.alert('Sucesso', 'PDF baixado com sucesso!');
-            }
-          }
-        }
+        // ✅ sempre baixa direto com o nome certo
+        forceDownloadWeb(pdfBlob, finalFilename);
+        Alert.alert('Sucesso', `PDF baixado: ${finalFilename}`);
+        return;
       } else {
         // --- Lógica React Native (iOS/Android) ---
         await handleNativeDownload(pdfBlob);
