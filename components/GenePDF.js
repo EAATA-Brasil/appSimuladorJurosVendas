@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
+import { ActivityIndicator, Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 // Importações específicas do Expo para manipulação de arquivos e compartilhamento
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -15,7 +15,7 @@ import * as Sharing from 'expo-sharing';
  * @param {string} faturamento - Informação de faturamento.
  * @param {Array<number>} quantidades - Quantidades de cada equipamento.
  * @param {number} valorParcela - Valor de cada parcela.
- * @param {number} valorTotal - Valor total da simulação.
+ * @param {number} valorTotal - Valor total da simulação (já com taxas/juros calculados por item).
  * @param {number} desconto - Valor do desconto aplicado.
  * @param {string} observacao - Observações adicionais.
  * @param {string} descricao - Descrição da simulação.
@@ -47,7 +47,9 @@ const PDFSimulacao = ({
   validarNomeCNPJ,
   nomeCliente,
   validarNomeCliente,
-  frete
+  frete,
+  itensPDF,
+  subtotalEquipamentosExibicao,
 }) => {
   // Estado para controlar se a geração do PDF está em andamento (para desabilitar o botão)
   const [isGenerating, setIsGenerating] = useState(false);
@@ -229,16 +231,24 @@ const PDFSimulacao = ({
         // Mapeia apenas os IDs dos equipamentos
         equipamentos: equipamentos.map(equip => equip.id), 
         quantidades: quantidades,
+        // Itens já com preços de exibição calculados no cliente (inclui taxas de cartão, se houver)
+        itensPDF: Array.isArray(itensPDF) ? itensPDF : [],
+        usarPrecosCliente: true, // dica para o backend priorizar os preços enviados ao invés de recomputar
+        subtotalEquipamentosExibicao: subtotalEquipamentosExibicao ?? null,
         entrada: entrada,
         parcelas: parcelas,
         localizacao: localizacao,
         faturamento: faturamento,
         valorParcela: valorParcela,
-        valorTotal: valorTotal,
+        // valorTotal deve ser o TOTAL JÁ COM TAXAS (soma dos itens já taxados)
+        valorTotal: (subtotalEquipamentosExibicao ?? valorTotal) ?? 0,
         desconto: desconto,
         observacao: observacao,
         descricao: descricao,
         tipoPagamento: tipoPagamento,
+        // Sugestões de apresentação para o servidor gerar o PDF conforme solicitado
+        labelValorFinal: tipoPagamento === 'Cartao' ? 'Valor nota fiscal' : 'Valor final (boleto)',
+        layoutCondicoes: '3-colunas', // instrução para renderizar condições de pagamento em 3 blocos lado a lado
         nomeVendedor: nomeVendedor,
         nomeCNPJ: nomeCNPJ,
         nomeCliente: nomeCliente,
@@ -294,9 +304,27 @@ const PDFSimulacao = ({
 
       // --- 7. Lógica de Download/Visualização por Plataforma ---
       if (Platform.OS === 'web') {
-        // ✅ sempre baixa direto com o nome certo
-        forceDownloadWeb(pdfBlob, finalFilename);
-        Alert.alert('Sucesso', `PDF baixado: ${finalFilename}`);
+        // Primeiro tenta visualizar o PDF em nova aba/visualizador.
+        try {
+          const blob = pdfBlob instanceof Blob ? pdfBlob : new Blob([pdfBlob], { type: 'application/pdf' });
+
+          // Safari costuma ter particularidades; use o visualizador com iframe
+          if (isSafari()) {
+            openPDFInViewer(blob);
+          } else {
+            const win = openPDFInNewTab(blob);
+            if (!win) {
+              // Caso o popup seja bloqueado, tente o visualizador embutido
+              openPDFInViewer(blob);
+            }
+          }
+        } catch (e) {
+          // Como último recurso, apenas abre no visualizador embutido (sem forçar download)
+          try {
+            const blob = pdfBlob instanceof Blob ? pdfBlob : new Blob([pdfBlob], { type: 'application/pdf' });
+            openPDFInViewer(blob);
+          } catch {}
+        }
         return;
       } else {
         // --- Lógica React Native (iOS/Android) ---
