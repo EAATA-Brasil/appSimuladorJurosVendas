@@ -5,8 +5,7 @@ import PDFSimulacao from '../../components/GenePDF';
 import { FinanceiroInput, NumericInput, Radio } from '../../components/Inputs';
 
 const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-
-const API_BASE_URL = '/api'
+const API_BASE_URL = "/api"
 
 const equipamentos_URL = `${API_BASE_URL}/equipamentos/`;
 const tipo_equipamento_URL = `${API_BASE_URL}/tiposEquipamento/`;
@@ -58,6 +57,7 @@ export default function App() {
   const [produtoNF, setProdutoNF] = useState(0);
   const [valorTotal, setValorTotal] = useState(0);
   const [valorParcelado, setValorParcelado] = useState(0);
+  const [ultimaParcela, setUltimaParcela] = useState(0);
 
   const tabelaTaxasCartao = {
     1: 0.0333,
@@ -84,16 +84,13 @@ export default function App() {
   };
 
   const formatarMoeda = (valor) => {
-    try{
-      valor = Math.round(valor)
-    }
-    catch{
-      1+1
-    }
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
-    }).format(valor);
+    const num = Number(valor) || 0;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
   };
 
   function formatCNPJ(value) {
@@ -451,25 +448,27 @@ useEffect(() => {
     }
   }, [equipamentosSelecionados, pagamento, parcelasDesabilitadas]);
 
-  // Cálculo de valor da parcela
+  // Cálculo de valor da parcela (em centavos)
   useEffect(() => {
-    let total = somaValores - entrada - desconto - descFiscal + frete
-    
-    if (pagamento === "Boleto") {
-      if (taxa <= 0) {
-        setValorParcela(Math.round(total / parcelas));
-      } else {
-        const factor = Math.pow(1 + taxa, parcelas);
-        const parcela = Math.round((total * taxa * factor) / (factor - 1));
-        setValorParcela(parcela);
-      }
-    } else {
-      const taxaTabela = tabelaTaxasCartao[parcelas] || 0;
-      const divisor = 1 - taxaTabela;
-      const valorCalculado = total / divisor / parcelas;
-      setValorParcela(Math.round(valorCalculado));
-    }
-  }, [entrada, pagamento, valoresCalculados, descFiscal, parcelas, taxa, somaValores, desconto, tabelaTaxasCartao]);
+    // total final (já taxado) em centavos
+    const totalFinalCent = Math.round((somaValores - desconto - descFiscal + frete) * 100);
+
+    // entrada em centavos
+    const entradaCent = Math.round((entrada || 0) * 100);
+
+    const saldoCent = Math.max(0, totalFinalCent - entradaCent);
+    const p = Math.max(1, parseInt(parcelas, 10) || 1);
+
+    // parcela “base” com 2 casas
+    const parcelaCent = Math.floor(saldoCent / p);
+
+    // converte pra reais com 2 casas
+    setValorParcela(parcelaCent / 100);
+
+    // total Nx exibido deve ser o total final
+    setValorParcelado(totalFinalCent / 100);
+  }, [somaValores, desconto, descFiscal, frete, entrada, parcelas]);
+
 
   // NF Serviço
   useEffect(() => {
@@ -490,14 +489,11 @@ useEffect(() => {
     const novosValores = equipamentosSelecionados.map((equipamento, index) => {
       if (!equipamento) return 0;
       const quantidade = parseInt(quantidades[index], 10) || 0;
-      return calcularValor(equipamento, quantidade);
+      return calcularValorProdutoFinal(equipamento, quantidade);
     });
     setValoresCalculados(novosValores);
-  }, [faturamento, localizacao, equipamentosSelecionados, quantidades]);
+  }, [faturamento, localizacao, equipamentosSelecionados, quantidades, pagamento, parcelas]);
 
-  useEffect(() => {
-    setValorParcelado(parseInt(produtoNF) + parseInt(servicoNF))
-  }, [produtoNF, servicoNF]);
 
   function verificarGrupo(equipamento){
     const tipoSelecionado = grupos.find(g => g.id === equipamento.grupo)?.nome || 'N/A'
@@ -522,7 +518,55 @@ useEffect(() => {
     return 0;
   };
 
+  const calcularValorProdutoFinal = (equipamento, quantidade) => {
+    if (!equipamento) return 0;
+
+    let valorBase = 0;
+    if (localizacao === 'SP') {
+      valorBase = equipamento.custo_geral * quantidade;
+    } else {
+      valorBase =
+        faturamento === 'CPF'
+          ? equipamento.custo_cpf * quantidade
+          : equipamento.custo_cnpj * quantidade;
+    }
+
+    // 🔥 SEMPRE aplica taxa no PDF
+    const taxaCartao = tabelaTaxasCartao[parcelas] || 0.125; // fallback 12,5%
+    const divisor = 1 - taxaCartao;
+
+    return Math.round(valorBase / divisor);
+  };
+
   const equipamentosValidos = equipamentosSelecionados.filter(e => e != null);
+  
+  const itensPDF = equipamentosValidos.map((equip, index) => {
+    const quantidade = parseInt(quantidades[index], 10) || 1;
+
+    const valorBaseUnit =
+      localizacao === 'SP'
+        ? equip.custo_geral
+        : faturamento === 'CPF'
+          ? equip.custo_cpf
+          : equip.custo_cnpj;
+
+    const valorBaseTotal = valorBaseUnit * quantidade;
+    const valorComTaxaTotal = valoresCalculados[index];
+
+    // Para Boleto, o "sem taxa" deve refletir o subtotal exibido (mesmo valor do item com taxa)
+    const valorBaseTotalAjustado = pagamento === 'Boleto' ? valorComTaxaTotal : valorBaseTotal;
+
+    return {
+      nome: equip.nome,
+      quantidade,
+      valorUnitario: Math.round((valorComTaxaTotal / quantidade) * 100) / 100,
+      valorTotal: valorComTaxaTotal,             // COM taxa (venda)
+      valorBaseTotal: valorBaseTotalAjustado,    // ❗ SEM taxa (ajustado no boleto)
+    };
+  });
+
+
+  
 
   return (
     <KeyboardAvoidingView 
@@ -873,12 +917,14 @@ useEffect(() => {
         {equipamentosValidos.length > 0 && (
           <>
             <PDFSimulacao
+              itensPDF={itensPDF}
+              subtotalEquipamentosExibicao={somaValores}
+              valorTotal={somaValores}
               entrada={entrada}
               equipamentos={equipamentosValidos}
               parcelas={parcelas}
               localizacao={localizacao}
               faturamento={faturamento}
-              valorTotal={valorTotal}
               quantidades={quantidades}
               valorParcela={valorParcela}
               baseNF={baseNF}
