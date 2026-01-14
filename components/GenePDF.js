@@ -227,6 +227,11 @@ const PDFSimulacao = ({
 
     try {
       // --- 2. Preparação dos Dados para a API ---
+      // Mantém centavos no PDF
+      const nParcelas = Math.max(1, parseInt(parcelas, 10) || 1);
+      const entradaNum = Number(String(entrada ?? 0).replace(/[^\d.-]/g, '')) || 0;
+      const valorTotalPDF = entradaNum + (Number(valorParcela) || 0) * nParcelas;
+
       const pdfData = {
         // Mapeia apenas os IDs dos equipamentos
         equipamentos: equipamentos.map(equip => equip.id), 
@@ -236,12 +241,13 @@ const PDFSimulacao = ({
         usarPrecosCliente: true, // dica para o backend priorizar os preços enviados ao invés de recomputar
         subtotalEquipamentosExibicao: subtotalEquipamentosExibicao ?? null,
         entrada: entrada,
-        parcelas: parcelas,
+        parcelas: nParcelas,
         localizacao: localizacao,
         faturamento: faturamento,
-        valorParcela: valorParcela,
-        // valorTotal deve ser o TOTAL JÁ COM TAXAS (soma dos itens já taxados)
-        valorTotal: (subtotalEquipamentosExibicao ?? valorTotal) ?? 0,
+        // Parcela com centavos
+        valorParcela: Number(valorParcela) || 0,
+        // Valor total no PDF: entrada + parcelas * parcela (com centavos)
+        valorTotal: valorTotalPDF,
         desconto: desconto,
         observacao: observacao,
         descricao: descricao,

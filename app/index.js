@@ -71,7 +71,7 @@ export default function App() {
     9: 0.0989,
     10: 0.1067,
     11: 0.1146,
-    12: 0.125,
+    12: 0.1226,
     13: 0.1307,
     14: 0.139,
     15: 0.1473,
@@ -135,6 +135,33 @@ export default function App() {
   var somaValores = useMemo(() => {
     return valoresCalculados.reduce((a, b) => a + b, 0);
   }, [valoresCalculados]);
+
+  // Utilitários e PMT
+  const round2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
+  const floor2 = (v) => Math.floor((Number(v) || 0) * 100) / 100;
+  const pmt = (rate, nper, pv) => {
+    const r = Number(rate) || 0;
+    const n = Math.max(1, parseInt(nper, 10) || 1);
+    const principal = Math.max(0, Number(pv) || 0);
+    if (r === 0) return principal / n;
+    const fator = Math.pow(1 + r, -n);
+    return (principal * r) / (1 - fator);
+  };
+
+  // Valor à vista (soma dos equipamentos sem taxas)
+  const valorAVistaEquip = useMemo(() => {
+    return equipamentosSelecionados.reduce((sum, eq, idx) => {
+      if (!eq) return sum;
+      const q = parseInt(quantidades[idx], 10) || 0;
+      let base = 0;
+      if (localizacao === 'SP') {
+        base = (eq.custo_geral || 0) * q;
+      } else {
+        base = faturamento === 'CPF' ? (eq.custo_cpf || 0) * q : (eq.custo_cnpj || 0) * q;
+      }
+      return sum + base;
+    }, 0);
+  }, [equipamentosSelecionados, quantidades, localizacao, faturamento]);
 
   // Função para validar se o nome do vendedor foi preenchido
   const validarNomeCNPJ = () => {
@@ -292,9 +319,10 @@ export default function App() {
   if (equipamentosSelecionados.includes(null)) return;
 
   if (equipamentosSelecionados.length < equipamentos.length) {
-    setEquipamentosSelecionados([...equipamentosSelecionados, null]);
-    setQuantidades([...quantidades, '1']);
-    setValoresCalculados([...valoresCalculados, 0]);
+    setEquipamentosSelecionados([null, ...equipamentosSelecionados]);
+    setQuantidades(['1', ...quantidades]);
+    setValoresCalculados([0, ...valoresCalculados]);
+    setObservacaoOrcamento(['', ...observacaoOrcamento]);
   }
 };
 
@@ -313,6 +341,12 @@ export default function App() {
     const novosValores = [...valoresCalculados];
     novosValores.splice(index, 1);
     setValoresCalculados(novosValores);
+
+    const novasObs = [...observacaoOrcamento];
+    if (index < novasObs.length) {
+      novasObs.splice(index, 1);
+      setObservacaoOrcamento(novasObs);
+    }
   };
 
   // Opções para os radio buttons
@@ -448,26 +482,36 @@ useEffect(() => {
     }
   }, [equipamentosSelecionados, pagamento, parcelasDesabilitadas]);
 
-  // Cálculo de valor da parcela (em centavos)
+  // Cálculo de valor da parcela e total
   useEffect(() => {
-    // total final (já taxado) em centavos
-    const totalFinalCent = Math.round((somaValores - desconto - descFiscal + frete) * 100);
+    const n = Math.max(1, parseInt(parcelas, 10) || 1);
 
-    // entrada em centavos
-    const entradaCent = Math.round((entrada || 0) * 100);
-
-    const saldoCent = Math.max(0, totalFinalCent - entradaCent);
-    const p = Math.max(1, parseInt(parcelas, 10) || 1);
-
-    // parcela “base” com 2 casas
-    const parcelaCent = Math.floor(saldoCent / p);
-
-    // converte pra reais com 2 casas
-    setValorParcela(parcelaCent / 100);
-
-    // total Nx exibido deve ser o total final
-    setValorParcelado(totalFinalCent / 100);
-  }, [somaValores, desconto, descFiscal, frete, entrada, parcelas]);
+    if (pagamento === 'Boleto') {
+      const base = Math.max(0, valorAVistaEquip - (desconto || 0) + (frete || 0));
+      const pv = Math.max(0, base - (entrada || 0));
+      const rate = n < 3 ? 0.05 : taxa; // 5% <3, senão 2,92%
+      const parcela = pmt(rate, n, pv);
+      setValorParcela(floor2(parcela));
+      setValorParcelado(round2((entrada || 0) + parcela * n));
+    } else {
+      // Cartão: soma por item
+      const somaBaseTotal = valorAVistaEquip;
+      const taxaCartao = tabelaTaxasCartao[n] ?? 0;
+      let parcelaTotal = 0;
+      equipamentosSelecionados.forEach((eq, idx) => {
+        if (!eq) return;
+        const q = parseInt(quantidades[idx], 10) || 0;
+        let base = 0;
+        if (localizacao === 'SP') base = (eq.custo_geral || 0) * q; else base = faturamento === 'CPF' ? (eq.custo_cpf || 0) * q : (eq.custo_cnpj || 0) * q;
+        const proporcao = (somaBaseTotal > 0) ? (base / somaBaseTotal) : 0;
+        const entradaItem = (entrada || 0) * proporcao;
+        const financiadoItem = Math.max(0, base - entradaItem);
+        if (financiadoItem > 0) parcelaTotal += (financiadoItem / (1 - taxaCartao)) / n;
+      });
+      setValorParcela(floor2(parcelaTotal));
+      setValorParcelado(round2((entrada || 0) + parcelaTotal * n));
+    }
+  }, [pagamento, parcelas, entrada, equipamentosSelecionados, quantidades, localizacao, faturamento, valorAVistaEquip, desconto, frete]);
 
 
   // NF Serviço
@@ -492,7 +536,7 @@ useEffect(() => {
       return calcularValorProdutoFinal(equipamento, quantidade);
     });
     setValoresCalculados(novosValores);
-  }, [faturamento, localizacao, equipamentosSelecionados, quantidades, pagamento, parcelas]);
+  }, [faturamento, localizacao, equipamentosSelecionados, quantidades, pagamento, parcelas, entrada]);
 
 
   function verificarGrupo(equipamento){
@@ -521,21 +565,32 @@ useEffect(() => {
   const calcularValorProdutoFinal = (equipamento, quantidade) => {
     if (!equipamento) return 0;
 
+    // Base do item
     let valorBase = 0;
     if (localizacao === 'SP') {
-      valorBase = equipamento.custo_geral * quantidade;
+      valorBase = (equipamento.custo_geral || 0) * quantidade;
     } else {
-      valorBase =
-        faturamento === 'CPF'
-          ? equipamento.custo_cpf * quantidade
-          : equipamento.custo_cnpj * quantidade;
+      valorBase = faturamento === 'CPF' ? (equipamento.custo_cpf || 0) * quantidade : (equipamento.custo_cnpj || 0) * quantidade;
     }
 
-    // 🔥 SEMPRE aplica taxa no PDF
-    const taxaCartao = tabelaTaxasCartao[parcelas] || 0.125; // fallback 12,5%
-    const divisor = 1 - taxaCartao;
+    // Soma base total e rateio da entrada
+    const somaBaseTotal = valorAVistaEquip;
+    const proporcao = (somaBaseTotal > 0) ? (valorBase / somaBaseTotal) : 0;
+    const entradaItem = (entrada || 0) * proporcao;
+    const financiadoItem = Math.max(0, valorBase - entradaItem);
 
-    return Math.round(valorBase / divisor);
+    if (pagamento === 'Boleto') {
+      const rate = (parcelas < 3) ? 0.05 : taxa; // 5% ou 2,92%
+      if (financiadoItem === 0) return Math.round(valorBase);
+      const parcelaItem = pmt(rate, parcelas, financiadoItem);
+      return Math.round(entradaItem + parcelaItem * parcelas);
+    }
+
+    // Cartão
+    const taxaCartao = tabelaTaxasCartao[parcelas] ?? 0;
+    if (!taxaCartao || financiadoItem === 0) return Math.round(valorBase);
+    const adicionalItem = financiadoItem * (taxaCartao / (1 - taxaCartao));
+    return Math.round(entradaItem + financiadoItem + adicionalItem);
   };
 
   const equipamentosValidos = equipamentosSelecionados.filter(e => e != null);
@@ -877,16 +932,11 @@ useEffect(() => {
                   <Text style={styles.resultValue}>{formatarMoeda(valorParcela)}</Text>
                 </View>
 
-                <View style={styles.resultRow}>
-                  <Text style={styles.resultLabel}>Base NF:</Text>
-                  <Text style={styles.resultValue}>{formatarMoeda(baseNF)}</Text>
-                </View>
-
                 <View style={styles.divider} />
 
                 <View style={styles.resultRow}>
                   <Text style={[styles.resultLabel, styles.boldText]}>À Vista:</Text>
-                  <Text style={[styles.resultValue, styles.boldText]}>{formatarMoeda(valorTotal)}</Text>
+                  <Text style={[styles.resultValue, styles.boldText]}>{formatarMoeda(valorAVistaEquip)}</Text>
                 </View>
 
                 <View style={styles.resultRow}>
